@@ -1,0 +1,6 @@
+{
+  "appId": "com.taskslife.performance",
+  "appName": "Task Life",
+  "webDir": "www",
+  "android": { "allowMixedContent": false }
+}

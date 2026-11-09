@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0f766e">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<title>Task Life</title>
+<style>
+:root{
+  --bg:#f4f7f6;--card:#fff;--ink:#12201e;--mute:#62706d;--line:#e2e9e7;
+  --brand:#0f766e;--brand2:#14b8a6;--good:#16a34a;--bad:#dc2626;--warn:#d97706;
+}
+@media (prefers-color-scheme:dark){
+  :root{--bg:#0d1514;--card:#16211f;--ink:#e8f1ef;--mute:#8fa09c;--line:#243431;--brand:#2dd4bf;--brand2:#14b8a6}
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,Roboto,sans-serif}
+body{padding-bottom:90px}
+header{position:sticky;top:0;z-index:5;background:var(--brand);color:#fff;padding:calc(12px + env(safe-area-inset-top)) 16px 12px;display:flex;align-items:center;justify-content:space-between}
+@media (prefers-color-scheme:dark){header{background:#0b3a35}}
+header h1{font-size:20px;margin:0;font-weight:700;letter-spacing:.2px}
+header button{background:rgba(255,255,255,.18);border:0;color:#fff;border-radius:10px;padding:8px 12px;font-size:14px}
+main{padding:14px 16px;max-width:640px;margin:0 auto}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:12px}
+.row{display:flex;align-items:center;gap:10px}
+.grow{flex:1;min-width:0}
+.title{font-weight:650;font-size:16px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sub{color:var(--mute);font-size:13px;margin-top:2px}
+.pill{font-size:12px;padding:3px 9px;border-radius:999px;background:var(--line);color:var(--mute)}
+.pct{font-size:22px;font-weight:750}
+.good{color:var(--good)}.bad{color:var(--bad)}.warn{color:var(--warn)}
+.check{width:46px;height:46px;border-radius:14px;border:2px solid var(--line);background:transparent;font-size:22px;color:var(--mute)}
+.check.on{background:var(--brand);border-color:var(--brand);color:#fff}
+.check.on.limit{background:var(--bad);border-color:var(--bad)}
+.tabs{display:flex;gap:6px;background:var(--card);border:1px solid var(--line);padding:4px;border-radius:12px;margin:10px 0}
+.tabs button{flex:1;border:0;background:transparent;padding:8px 4px;border-radius:9px;font-size:13px;color:var(--mute)}
+.tabs button.on{background:var(--brand);color:#fff}
+.dayStrip{display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:6px}
+.dayStrip button{flex:0 0 auto;min-width:48px;border:1px solid var(--line);background:var(--card);border-radius:12px;padding:6px 4px;color:var(--ink);font-size:12px;line-height:1.3}
+.dayStrip button.sel{background:var(--brand);color:#fff;border-color:var(--brand)}
+.dayStrip b{display:block;font-size:16px}
+.fab{position:fixed;right:18px;bottom:calc(18px + env(safe-area-inset-bottom));width:58px;height:58px;border-radius:18px;border:0;background:var(--brand);color:#fff;font-size:30px;box-shadow:0 6px 18px rgba(0,0,0,.25)}
+.empty{text-align:center;color:var(--mute);padding:40px 10px}
+dialog{border:0;border-radius:18px;padding:18px;width:min(92vw,420px);background:var(--card);color:var(--ink)}
+dialog::backdrop{background:rgba(0,0,0,.45)}
+label{display:block;font-size:13px;color:var(--mute);margin:12px 0 5px}
+input[type=text],input[type=number],select{width:100%;padding:11px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font-size:16px}
+.seg{display:flex;gap:8px}
+.seg button{flex:1;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink)}
+.seg button.on{background:var(--brand);color:#fff;border-color:var(--brand)}
+.btns{display:flex;gap:8px;margin-top:18px}
+.btns button{flex:1;padding:12px;border-radius:12px;border:0;font-size:15px;font-weight:600}
+.primary{background:var(--brand);color:#fff}.ghost{background:var(--line);color:var(--ink)}.danger{background:#fee2e2;color:#b91c1c}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0}
+.stat{background:var(--bg);border-radius:12px;padding:10px;text-align:center}
+.stat b{font-size:19px;display:block}.stat span{font-size:11px;color:var(--mute)}
+svg text{fill:var(--mute);font-size:10px}
+.bar{fill:var(--brand2)}.bar.miss{fill:var(--bad);opacity:.75}
+.tline{stroke:var(--warn);stroke-width:1.5;stroke-dasharray:4 3}
+.back{background:none;border:0;color:#fff;font-size:15px;padding:8px 0}
+.bigbar{height:10px;border-radius:99px;background:var(--line);overflow:hidden;margin-top:8px}
+.bigbar i{display:block;height:100%;background:var(--brand2)}
+</style>
+</head>
+<body>
+<header><h1 id="hTitle">Task Life</h1><button id="hBtn" hidden>Back</button></header>
+<main id="app"></main>
+<button class="fab" id="fab" aria-label="Add goal">+</button>
+
+<dialog id="dlg">
+  <form method="dialog" id="form">
+    <h3 style="margin:0 0 4px" id="dTitle">New goal</h3>
+    <label>What do you want to track?</label>
+    <input type="text" id="fName" placeholder="e.g. Go to the gym" maxlength="60" required>
+    <label>Type</label>
+    <div class="seg" id="fType">
+      <button type="button" data-v="do" class="on">Do it</button>
+      <button type="button" data-v="limit">Limit it</button>
+    </div>
+    <label id="fTargetLbl">Target: days per week</label>
+    <select id="fTarget"></select>
+    <div class="btns">
+      <button type="button" class="ghost" id="dCancel">Cancel</button>
+      <button type="submit" class="primary">Save</button>
+    </div>
+    <div class="btns" id="delRow" hidden><button type="button" class="danger" id="dDelete">Delete goal</button></div>
+  </form>
+</dialog>
+
+<script>
+"use strict";
+/* ---------- storage ---------- */
+const KEY = "tasklife.v1";
+let state = load();
+function load(){ try{ return JSON.parse(localStorage.getItem(KEY)) || {goals:[]}; }catch(e){ return {goals:[]}; } }
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){} }
+const uid = () => Math.random().toString(36).slice(2,10);
+
+/* ---------- dates (local, Monday-start weeks) ---------- */
+const iso = d => d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+const parse = s => { const [y,m,d]=s.split("-").map(Number); return new Date(y,m-1,d); };
+const addDays = (d,n) => { const x=new Date(d); x.setDate(x.getDate()+n); return x; };
+const today = () => { const t=new Date(); return new Date(t.getFullYear(),t.getMonth(),t.getDate()); };
+const weekStart = d => addDays(d, -((d.getDay()+6)%7));
+const DAYS = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+
+/* ---------- performance maths ---------- */
+// A "do" goal succeeds in a week when days >= target; a "limit" goal when days <= target.
+function weeksOf(g){
+  const start = weekStart(parse(g.created)), end = weekStart(today());
+  const out=[];
+  for(let w=start; w<=end; w=addDays(w,7)){
+    const ws=iso(w); let n=0;
+    for(let i=0;i<7;i++) if(g.log[iso(addDays(w,i))]) n++;
+    const current = ws===iso(end);
+    out.push({ws,n,current});
+  }
+  return out;
+}
+const weekOk = (g,w) => g.type==="do" ? w.n>=g.target : w.n<=g.target;
+// For do-goals: current week is only judged once target is reachable/missed; keep it simple: count completed weeks, plus current if already ok.
+function perf(g, windowWeeks){
+  let ws = weeksOf(g);
+  const done = ws.filter(w=>!w.current);
+  let judged = done.slice();
+  const cur = ws[ws.length-1];
+  if(cur && cur.current){
+    // include current week once its outcome is certain
+    const daysLeft = 6 - ((today().getDay()+6)%7);
+    if(g.type==="do" && cur.n>=g.target) judged.push(cur);
+    else if(g.type==="limit" && cur.n>g.target) judged.push(cur);
+    else if(g.type==="limit" && daysLeft===0) judged.push(cur);
+  }
+  if(windowWeeks) judged = judged.slice(-windowWeeks);
+  const ok = judged.filter(w=>weekOk(g,w)).length;
+  return {pct: judged.length ? Math.round(ok/judged.length*100) : null, ok, total: judged.length, weeks: ws};
+}
+function streak(g){
+  const ws = weeksOf(g).filter(w=>!w.current).reverse();
+  let s=0; for(const w of ws){ if(weekOk(g,w)) s++; else break; }
+  const cur=weeksOf(g).slice(-1)[0]; if(cur && g.type==="do" && cur.n>=g.target) s++;
+  return s;
+}
+const pctClass = p => p==null ? "" : p>=80 ? "good" : p>=50 ? "warn" : "bad";
+const weekCount = (g, ws) => { let n=0; for(let i=0;i<7;i++) if(g.log[iso(addDays(parse(ws),i))]) n++; return n; };
+
+/* ---------- ui state ---------- */
+let view = {name:"home", id:null, mode:"overall", day: iso(today())};
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+function render(){
+  const app=$("#app"), fab=$("#fab"), hb=$("#hBtn");
+  if(view.name==="home"){ $("#hTitle").textContent="Task Life"; hb.hidden=true; fab.hidden=false; app.innerHTML=home(); }
+  else { const g=state.goals.find(x=>x.id===view.id); if(!g){view.name="home";return render();}
+    $("#hTitle").textContent=g.name; hb.hidden=false; hb.textContent="‹ Back"; fab.hidden=true; app.innerHTML=detail(g); }
+}
+
+function home(){
+  const t=today();
+  const strip = Array.from({length:7},(_,i)=>addDays(t,i-6)).map(d=>{
+    const s=iso(d); return `<button data-day="${s}" class="${s===view.day?"sel":""}">${DAYS[(d.getDay()+6)%7]}<b>${d.getDate()}</b></button>`;
+  }).join("");
+  if(!state.goals.length) return `<div class="empty"><div style="font-size:44px">🎯</div><p><b>No goals yet</b></p><p>Tap + to add one, like “Gym 2 days a week” or “Cake max 1 day a week”.</p></div>`;
+  const cards = state.goals.map(g=>{
+    const p=perf(g), on=!!g.log[view.day], ws=iso(weekStart(parse(view.day))), n=weekCount(g,ws);
+    return `<div class="card" data-open="${g.id}">
+      <div class="row">
+        <div class="grow"><div class="title">${esc(g.name)}</div>
+          <div class="sub">${g.type==="do"?"At least":"At most"} ${g.target}×/week · this week ${n}</div></div>
+        <div style="text-align:right"><div class="pct ${pctClass(p.pct)}">${p.pct==null?"–":p.pct+"%"}</div><div class="sub">weeks on target</div></div>
+        <button class="check ${on?"on":""} ${g.type}" data-toggle="${g.id}" aria-label="Toggle">${on?"✓":"○"}</button>
+      </div></div>`;
+  }).join("");
+  const label = view.day===iso(t) ? "Today" : parse(view.day).toDateString();
+  return `<div class="dayStrip">${strip}</div><div class="sub" style="margin:0 2px 8px">${label} — tap the circle when you did it</div>${cards}`;
+}
+
+function chart(g, weeks){
+  if(!weeks.length) return `<div class="sub">No data yet.</div>`;
+  const W=320,H=140,pad=22, max=Math.max(7,g.target), bw=Math.min(28,(W-pad*2)/weeks.length-4);
+  const step=(W-pad*2)/weeks.length, y=v=>H-pad-(v/max)*(H-pad*2);
+  const bars=weeks.map((w,i)=>{
+    const x=pad+i*step+(step-bw)/2, h=H-pad-y(w.n), miss=!weekOk(g,w)&&!w.current;
+    const lab = weeks.length<=12 || i%Math.ceil(weeks.length/10)===0 ? `<text x="${x+bw/2}" y="${H-6}" text-anchor="middle">${parse(w.ws).getDate()}/${parse(w.ws).getMonth()+1}</text>`:"";
+    return `<rect class="bar ${miss?"miss":""}" x="${x}" y="${y(w.n)}" width="${bw}" height="${Math.max(h,1)}" rx="4"/><text x="${x+bw/2}" y="${y(w.n)-3}" text-anchor="middle">${w.n}</text>${lab}`;
+  }).join("");
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Days per week">
+    <line class="tline" x1="${pad}" x2="${W-pad}" y1="${y(g.target)}" y2="${y(g.target)}"/>
+    <text x="${W-pad}" y="${y(g.target)-4}" text-anchor="end">target ${g.target}</text>${bars}</svg>`;
+}
+
+function detail(g){
+  const m=view.mode, win = m==="overall"?0 : m==="window"?4 : 1;
+  const p=perf(g, win||undefined);
+  let weeks=p.weeks; if(m==="window") weeks=weeks.slice(-8); if(m==="week") weeks=weeks.slice(-1);
+  const totalDays=Object.keys(g.log).length;
+  let body;
+  if(m==="week"){
+    const cur=weeks[weeks.length-1]; const ws=cur.ws;
+    const days=Array.from({length:7},(_,i)=>{const d=addDays(parse(ws),i),s=iso(d),on=!!g.log[s],fut=d>today();
+      return `<button class="check ${on?"on":""} ${g.type}" ${fut?"disabled style='opacity:.35'":""} data-dtoggle="${s}"><div style="font-size:10px">${DAYS[i]}</div>${on?"✓":d.getDate()}</button>`}).join("");
+    body=`<div class="card"><div class="sub" style="margin-bottom:10px">This week — ${cur.n} of target ${g.target} (${g.type==="do"?"at least":"at most"})</div>
+      <div style="display:flex;gap:6px;justify-content:space-between">${days}</div>
+      <div class="bigbar"><i style="width:${Math.min(100,cur.n/g.target*100)}%"></i></div></div>`;
+  } else {
+    body=`<div class="card"><div class="sub" style="margin-bottom:6px">Days per week${m==="window"?" (last 8 weeks)":""}</div>${chart(g,weeks)}</div>`;
+  }
+  return `<div class="tabs">
+      <button data-mode="overall" class="${m==="overall"?"on":""}">Overall</button>
+      <button data-mode="window" class="${m==="window"?"on":""}">Last 4 weeks</button>
+      <button data-mode="week" class="${m==="week"?"on":""}">This week</button></div>
+    <div class="card"><div class="row"><div class="grow"><div class="sub">${m==="week"?"This week":m==="window"?"Last 4 weeks":"All time"} performance</div>
+      <div class="pct ${pctClass(p.pct)}" style="font-size:34px">${p.pct==null?"–":p.pct+"%"}</div></div>
+      <div class="sub" style="text-align:right">${p.ok} of ${p.total} weeks<br>on target</div></div>
+      <div class="stats"><div class="stat"><b>${streak(g)}</b><span>week streak</span></div>
+      <div class="stat"><b>${totalDays}</b><span>days logged</span></div>
+      <div class="stat"><b>${g.target}×</b><span>${g.type==="do"?"min":"max"} / week</span></div></div></div>
+    ${body}
+    <button class="ghost" style="width:100%;padding:12px;border:0;border-radius:12px;color:var(--ink)" data-edit="${g.id}">Edit goal</button>`;
+}
+
+/* ---------- events ---------- */
+document.addEventListener("click", e=>{
+  const t=e.target.closest("[data-toggle],[data-open],[data-day],[data-mode],[data-dtoggle],[data-edit]"); if(!t) return;
+  if(t.dataset.toggle){ e.stopPropagation(); const g=state.goals.find(x=>x.id===t.dataset.toggle); toggle(g, view.day); }
+  else if(t.dataset.open){ view={...view,name:"detail",id:t.dataset.open,mode:"overall"}; render(); window.scrollTo(0,0); }
+  else if(t.dataset.day){ view.day=t.dataset.day; render(); }
+  else if(t.dataset.mode){ view.mode=t.dataset.mode; render(); }
+  else if(t.dataset.dtoggle){ const g=state.goals.find(x=>x.id===view.id); toggle(g,t.dataset.dtoggle); }
+  else if(t.dataset.edit){ openDlg(state.goals.find(x=>x.id===t.dataset.edit)); }
+});
+function toggle(g,day){ if(g.log[day]) delete g.log[day]; else g.log[day]=1; save(); render(); if(navigator.vibrate) navigator.vibrate(15); }
+$("#hBtn").onclick=()=>{ view.name="home"; render(); };
+$("#fab").onclick=()=>openDlg(null);
+
+/* dialog */
+let editing=null, ftype="do";
+const sel=$("#fTarget");
+function fillTargets(){ sel.innerHTML=""; const lo = ftype==="do"?1:0; for(let i=lo;i<=7;i++){ const o=document.createElement("option"); o.value=i;o.textContent=i+(i===1?" day":" days"); sel.appendChild(o);} }
+function setType(v){ ftype=v; document.querySelectorAll("#fType button").forEach(b=>b.classList.toggle("on",b.dataset.v===v));
+  $("#fTargetLbl").textContent = v==="do" ? "Target: at least this many days per week" : "Limit: at most this many days per week"; const keep=sel.value; fillTargets(); if([...sel.options].some(o=>o.value===keep)) sel.value=keep; }
+document.querySelectorAll("#fType button").forEach(b=>b.onclick=()=>setType(b.dataset.v));
+function openDlg(g){
+  editing=g; $("#dTitle").textContent=g?"Edit goal":"New goal"; $("#fName").value=g?g.name:""; setType(g?g.type:"do"); sel.value=g?g.target:(ftype==="do"?2:1);
+  $("#delRow").hidden=!g; $("#dlg").showModal();
+}
+$("#dCancel").onclick=()=>$("#dlg").close();
+$("#form").addEventListener("submit", e=>{
+  const name=$("#fName").value.trim(); if(!name){ e.preventDefault(); return; }
+  const target=Number(sel.value);
+  if(editing){ Object.assign(editing,{name,type:ftype,target}); }
+  else state.goals.push({id:uid(),name,type:ftype,target,created:iso(today()),log:{}});
+  save(); render();
+});
+$("#dDelete").onclick=()=>{ if(confirm("Delete this goal and its history?")){ state.goals=state.goals.filter(x=>x!==editing); save(); $("#dlg").close(); view.name="home"; render(); } };
+
+render();
+if("serviceWorker" in navigator && location.protocol.startsWith("http")) navigator.serviceWorker.register("sw.js").catch(()=>{});
+</script>
+</body>
+</html>
